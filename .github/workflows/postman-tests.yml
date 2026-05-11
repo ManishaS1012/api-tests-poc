@@ -8,7 +8,6 @@ on:
   schedule:
     - cron: '0 6 * * *'
 
-# ✅ Fix Error 2 — give workflow permission to write checks
 permissions:
   contents: read
   checks: write
@@ -18,14 +17,18 @@ jobs:
   api-tests:
     runs-on: ubuntu-latest
 
+    # ✅ Fix Issue 2 — force Node.js 24 for all actions
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'         # ✅ upgraded from 20 to 24
 
       - name: Install Newman and reporters
         run: |
@@ -36,27 +39,32 @@ jobs:
       - name: Create reports folder
         run: mkdir -p reports
 
+      - name: Debug — verify files exist
+        run: |
+          echo "=== Postman folder contents ==="
+          ls -la postman/postman/ || ls -la postman/ || echo "No postman folder found"
+
       - name: Inject secrets into environment file
         run: |
-          cat postman/Test_Environment.postman_environment.json | \
+          cat postman/postman/Test_Environment.postman_environment.json | \
           jq '.values |= map(
             if .key == "BaseURL" then .value = "${{ secrets.BASE_URL }}"
             elif .key == "Username" then .value = "${{ secrets.API_USERNAME }}"
             elif .key == "Password" then .value = "${{ secrets.API_PASSWORD }}"
-            else . end)' > postman/env_injected.json
+            else . end)' > postman/postman/env_injected.json
 
       - name: Run Newman tests
+        # ✅ Fix Issue 1 — continue even if tests fail so report is always uploaded
+        continue-on-error: true
         run: |
-          newman run postman/REST_API_test.postman_collection.json \
-            -e postman/env_injected.json \
+          newman run postman/postman/REST_API_test.postman_collection.json \
+            -e postman/postman/env_injected.json \
             --insecure \
             --reporters cli,htmlextra,junitfull \
             --reporter-htmlextra-export reports/TestReport.html \
             --reporter-htmlextra-title "UAT API Test Report" \
             --reporter-junitfull-export reports/results.xml
-        continue-on-error: true
 
-      # ✅ Fix Error 1 — now results.xml exists for this step
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
@@ -65,9 +73,12 @@ jobs:
           check_name: "Newman API Test Results"
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      # ✅ Artifact now named correctly
       - name: Upload HTML report
-        if: always()
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: api-test-report
-          path: reports/TestReport.html
+          name: postman-test-results
+          path: |
+            reports/TestReport.html
+            reports/results.xml
