@@ -1,0 +1,46 @@
+name: Postman API Tests - REST_API_test
+
+on:
+  push:
+    branches:
+      - main                        # Run on every push to main
+  schedule:
+    - cron: '0 0 * * *'            # Run daily at midnight UTC
+
+jobs:
+  postman-collection-run:
+    name: Run Postman Collection (REST_API_test)
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Postman CLI
+        run: |
+          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+
+      - name: Authenticate Postman CLI
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+
+      - name: Run REST_API_test Collection
+        run: |
+          postman collection run "17601637-abac787e-7af8-4324-bbc7-7b37d4ed6943" \
+            --environment "17601637-8b5f558e-5861-4bed-8e6e-3b6f6acb5967" \
+            --bail \
+            --reporters cli,junit \
+            --reporter-junit-export results.xml
+
+      - name: Upload Test Results Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: postman-test-results
+          path: results.xml
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: results.xml
