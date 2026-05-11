@@ -1,0 +1,22 @@
+# Postman
+postman/Test_Environment.postman_environment.json
+postman/postman/
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log
