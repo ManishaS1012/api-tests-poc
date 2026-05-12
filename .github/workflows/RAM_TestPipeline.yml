@@ -56,24 +56,27 @@ jobs:
       # ── 6. Inject secrets ─────────────────────────────────
       - name: Inject secrets into environment file
         run: |
-          if [ -f "postman/environments/Test_Environment.postman_environment.json" ]; then
-            ENV_PATH="postman/environments/Test_Environment.postman_environment.json"
-            OUT_PATH="postman/postman/env_injected.json"
-            COL_PATH="postman/collections/REST_API_test.postman_collection.json"
-          else
-            ENV_PATH="postman/environments/Test_Environment.postman_environment.json"
-            OUT_PATH="postman/env_injected.json"
-            COL_PATH="postman/collections/REST_API_test.postman_collection.json"
-          fi
+          ENV_PATH="postman/environments/Test_Environment.postman_environment.json"
+          OUT_PATH="postman/environments/env_injected.json"
+          COL_PATH="postman/collections/REST_API_test.postman_collection.json"
+
+          echo "✅ Collection : $COL_PATH"
+          echo "✅ Environment: $ENV_PATH"
+          echo "✅ Output     : $OUT_PATH"
+
           echo "COLLECTION=$COL_PATH" >> $GITHUB_ENV
-          echo "ENV_FILE=$OUT_PATH" >> $GITHUB_ENV
+          echo "ENV_FILE=$OUT_PATH"   >> $GITHUB_ENV
+
           cat $ENV_PATH | jq '.values |= map(
-            if .key == "BaseURL" then .value = "${{ secrets.BASE_URL }}"
+            if .key == "BaseURL"   then .value = "${{ secrets.BASE_URL }}"
             elif .key == "Username" then .value = "${{ secrets.API_USERNAME }}"
             elif .key == "Password" then .value = "${{ secrets.API_PASSWORD }}"
             else . end)' > $OUT_PATH
 
-      # ── 7. Run Newman ──────────────────────────────────────
+          echo "✅ env_injected.json created successfully"
+          cat $OUT_PATH
+
+     # ── 7. Run Newman ──────────────────────────────────────
       - name: Run Newman tests
         continue-on-error: true
         run: |
@@ -82,7 +85,7 @@ jobs:
             --insecure \
             --reporters cli,htmlextra,junitfull,json \
             --reporter-htmlextra-export reports/TestReport.html \
-            --reporter-htmlextra-title "UAT API Test Report — ${{ github.run_number }}" \
+            --reporter-htmlextra-title "UAT API Test Report — Run ${{ github.run_number }}" \
             --reporter-junitfull-export reports/results.xml \
             --reporter-json-export results/postman-results.json
 
