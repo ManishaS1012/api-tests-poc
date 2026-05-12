@@ -56,14 +56,14 @@ jobs:
       # ── 6. Inject secrets ─────────────────────────────────
       - name: Inject secrets into environment file
         run: |
-          if [ -f "postman/postman/Test_Environment.postman_environment.json" ]; then
-            ENV_PATH="postman/postman/Test_Environment.postman_environment.json"
+          if [ -f "postman/environments/Test_Environment.postman_environment.json" ]; then
+            ENV_PATH="postman/environments/Test_Environment.postman_environment.json"
             OUT_PATH="postman/postman/env_injected.json"
-            COL_PATH="postman/postman/REST_API_test.postman_collection.json"
+            COL_PATH="postman/collections/REST_API_test.postman_collection.json"
           else
-            ENV_PATH="postman/Test_Environment.postman_environment.json"
+            ENV_PATH="postman/environments/Test_Environment.postman_environment.json"
             OUT_PATH="postman/env_injected.json"
-            COL_PATH="postman/REST_API_test.postman_collection.json"
+            COL_PATH="postman/collections/REST_API_test.postman_collection.json"
           fi
           echo "COLLECTION=$COL_PATH" >> $GITHUB_ENV
           echo "ENV_FILE=$OUT_PATH" >> $GITHUB_ENV
