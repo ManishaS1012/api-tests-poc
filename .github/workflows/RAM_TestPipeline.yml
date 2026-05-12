@@ -68,9 +68,9 @@ jobs:
           echo "ENV_FILE=$OUT_PATH"   >> $GITHUB_ENV
 
           cat $ENV_PATH | jq '.values |= map(
-            if .key == "BaseURL"   then .value = "${{ secrets.BASE_URL }}"
-            elif .key == "Username" then .value = "${{ secrets.API_USERNAME }}"
-            elif .key == "Password" then .value = "${{ secrets.API_PASSWORD }}"
+            if .key == "BaseURL"   then .value = "https://uat.ram.co.za/Integration.API.Test"
+            elif .key == "Username" then .value = "uafrica"
+            elif .key == "Password" then .value = "uafricauat123"
             else . end)' > $OUT_PATH
 
           echo "✅ env_injected.json created successfully"
